@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B1214">
+<title>Schätzung</title>
+<meta name="description" content="Vor der Schicht das Trinkgeld pro Person schätzen, am Ende sehen, wer am nächsten dran war">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schätzung">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1214; --tape:#141D1F; --tape2:#182325; --rule:#26383D;
+  --text:#E6EDEC; --muted:#86A0A2; --petrol:#2E9E96; --signal:#F0A24A; --warn:#E2705F; --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink); color:var(--text);
+  font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:16px; line-height:1.45;
+  -webkit-text-size-adjust:100%;
+  padding-top:env(safe-area-inset-top, 0px);
+  padding-right:calc(16px + env(safe-area-inset-right, 0px));
+  padding-bottom:calc(48px + env(safe-area-inset-bottom, 0px));
+  padding-left:calc(16px + env(safe-area-inset-left, 0px));
+}
+.wrap{max-width:520px;margin:0 auto}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:26px 0 18px}
+.mark{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;line-height:1}
+.mark span{color:var(--petrol)}
+.date{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.04em;margin-top:5px}
+.hbtn{
+  background:none;border:1px solid var(--rule);color:var(--muted);
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 11px;border-radius:99px;cursor:pointer;touch-action:manipulation;
+}
+.hbtn:hover{color:var(--text);border-color:var(--muted)}
+
+.status{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--tape);margin-bottom:16px}
+.status > div{padding:11px 12px 12px;min-width:0}
+.status > div + div{border-left:1px solid var(--rule)}
+.status .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.status .n{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:500;letter-spacing:-.02em;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status .n.dim{color:var(--muted)}
+.status .n.hot{color:var(--signal)}
+
+.card{background:var(--tape);border:1px solid var(--rule);border-radius:var(--r);padding:18px 16px;margin-bottom:16px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--petrol);margin-bottom:14px}
+h2{font-family:"Space Grotesk",sans-serif;font-size:17px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em}
+.hint{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+
+.field{margin-bottom:13px}
+.field label{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.inp{position:relative}
+.inp input{
+  width:100%;background:var(--ink);border:1px solid var(--rule);border-radius:10px;color:var(--text);
+  font-family:"IBM Plex Mono",monospace;font-size:23px;font-weight:500;padding:12px 44px 12px 14px;letter-spacing:-.02em;
+}
+.inp input.txt{font-family:"IBM Plex Sans",sans-serif;font-size:19px;letter-spacing:0;padding-right:14px}
+.inp input:focus{outline:none;border-color:var(--petrol);box-shadow:0 0 0 3px rgba(46,158,150,.16)}
+.inp input.bad{border-color:var(--warn);box-shadow:0 0 0 3px rgba(226,112,95,.14)}
+.inp .cur{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:17px;pointer-events:none}
+.sub{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:5px;padding-left:2px;min-height:16px}
+.sub.bad{color:var(--warn)}
+
+.go{
+  width:100%;margin-top:6px;padding:15px;border:none;border-radius:11px;background:var(--signal);color:#241503;
+  cursor:pointer;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;touch-action:manipulation;
+}
+.go:disabled{background:var(--rule);color:var(--muted);cursor:not-allowed}
+.go.ghost{background:none;border:1px solid var(--rule);color:var(--muted);font-size:13px;padding:11px}
+.go.ghost:hover{color:var(--text);border-color:var(--muted)}
+.go.ghost.warn:hover{color:var(--warn);border-color:var(--warn)}
+
+.perf{height:1px;margin:17px -16px 13px;background:repeating-linear-gradient(90deg,var(--rule) 0 5px,transparent 5px 10px)}
+.beleg{font-family:"IBM Plex Mono",monospace;font-size:13.5px}
+.r{display:flex;align-items:center;gap:7px;padding:3.5px 0}
+.r .l{color:var(--muted);white-space:nowrap;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.r .l b{color:var(--text);font-weight:500;font-family:"IBM Plex Sans",sans-serif;font-size:14px}
+.r .dots{flex:1;border-bottom:1px dotted var(--rule);transform:translateY(3px);min-width:10px}
+.r .v{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:500}
+.r .x{
+  flex:none;background:none;border:none;color:var(--muted);font-size:18px;line-height:1;
+  width:30px;height:30px;margin-right:-6px;border-radius:8px;cursor:pointer;touch-action:manipulation;
+}
+.r .x:hover{color:var(--warn);background:rgba(226,112,95,.09)}
+.empty{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);padding:2px 0}
+
+/* Foto vom Schichtplan */
+.photo{display:flex;align-items:center;justify-content:center;gap:9px}
+.photo svg{flex:none}
+.ocr{margin-top:12px}
+.ocrbar{height:4px;background:var(--ink);border-radius:2px;overflow:hidden}
+.ocrbar i{display:block;height:100%;width:0;background:var(--petrol);transition:width .2s ease}
+.ocr.err .ocrbar{display:none}
+.ocr.err .sub{color:var(--warn)}
+.raw{margin-top:8px}
+.raw summary{cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--petrol);padding:2px}
+.raw pre{margin:8px 0 0;padding:10px 12px;max-height:220px;overflow:auto;background:var(--ink);border:1px solid var(--rule);border-radius:9px;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.5;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+
+/* Namensliste mit Schätzfeld */
+.pp{display:grid;grid-template-columns:1fr 116px 30px;column-gap:8px;align-items:center;padding:5px 0}
+.pp .pn{
+  min-width:0;width:100%;background:none;border:none;border-bottom:1px dotted var(--rule);border-radius:0;color:var(--text);
+  font-family:"IBM Plex Sans",sans-serif;font-size:15px;font-weight:500;padding:9px 2px;
+}
+.pp .pn:focus{outline:none;border-bottom:1px solid var(--petrol)}
+.pp .pn.bad{border-bottom:1px solid var(--warn)}
+.pp .pe{position:relative}
+.pp .pe input{
+  width:100%;background:var(--ink);border:1px solid var(--rule);border-radius:9px;color:var(--text);text-align:right;
+  font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500;padding:9px 27px 9px 8px;letter-spacing:-.02em;
+}
+.pp .pe span{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:14px;pointer-events:none}
+.pp .pe input:focus{outline:none;border-color:var(--petrol);box-shadow:0 0 0 3px rgba(46,158,150,.16)}
+.pp .pe input.bad{border-color:var(--warn);box-shadow:0 0 0 3px rgba(226,112,95,.14)}
+.pp .pe input.ok{border-color:rgba(46,158,150,.45)}
+.pp .x{
+  background:none;border:none;color:var(--muted);font-size:18px;line-height:1;
+  width:30px;height:30px;border-radius:8px;cursor:pointer;touch-action:manipulation;
+}
+.pp .x:hover{color:var(--warn);background:rgba(226,112,95,.09)}
+.pp .ps{grid-column:1/-1;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--warn);padding:4px 2px 0}
+.pp .ps:empty{display:none}
+
+.addrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.addrow .who{flex:1;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);line-height:1.35}
+.addrow button{
+  flex:none;background:none;border:1px dashed var(--rule);color:var(--petrol);
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.03em;
+  padding:8px 12px;border-radius:99px;cursor:pointer;touch-action:manipulation;white-space:nowrap;
+}
+.addrow button:hover{border-color:var(--petrol);border-style:solid}
+
+/* Rangliste */
+.big{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
+.big .lbl{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.04em;line-height:1.4}
+.big .amt{font-family:"IBM Plex Mono",monospace;font-size:29px;font-weight:600;color:var(--signal);letter-spacing:-.03em}
+.rk{display:grid;grid-template-columns:30px 1fr auto;column-gap:10px;row-gap:7px;align-items:baseline;padding:11px 0;border-top:1px solid var(--rule)}
+.rk .pl{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--muted)}
+.rk .nm{min-width:0}
+.rk .nm b{display:block;font-weight:500;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .nm span{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted)}
+.rk .df{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rk .df small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+.rk .bar{grid-column:2/4;height:4px;background:var(--ink);border-radius:2px;overflow:hidden}
+.rk .bar i{display:block;height:100%;background:rgba(134,160,162,.55)}
+.rk.top .pl,.rk.top .df{color:var(--signal)}
+.rk.top .bar i{background:var(--signal)}
+.rk.compact{padding:8px 0;row-gap:0}
+.rk.compact .nm b{font-size:14px}
+.rk.compact .df{font-size:13.5px}
+
+.meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text);margin:-6px 0 12px;letter-spacing:.01em}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.chip{
+  background:none;border:1px solid var(--rule);color:var(--muted);border-radius:99px;padding:6px 11px;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;cursor:pointer;touch-action:manipulation;
+}
+.chip:hover{color:var(--text);border-color:var(--muted)}
+.chip.on{color:var(--petrol);border-color:var(--petrol);background:rgba(46,158,150,.09)}
+
+/* Namen im Verlauf antippbar, Einzelansicht */
+button.rk{width:100%;background:none;border:none;border-top:1px solid var(--rule);color:inherit;font:inherit;text-align:left;cursor:pointer;
+  grid-template-columns:30px 1fr auto 16px;touch-action:manipulation}
+.board button.rk:first-child{border-top:none}
+button.rk:hover .nm b{color:var(--petrol)}
+button.rk .chev{color:var(--muted);align-self:center}
+.rk .nm span.two{display:block;margin-top:1px}
+.back{background:none;border:none;color:var(--petrol);font-family:"IBM Plex Mono",monospace;font-size:12.5px;padding:4px 0 14px;cursor:pointer;touch-action:manipulation}
+.pname{font-size:24px;margin-bottom:14px}
+.status.inner{margin:0;background:var(--tape2)}
+/* Events unter dem Titel */
+.events{margin-top:10px}
+.ev{
+  display:grid;grid-template-columns:78px 1fr auto;column-gap:9px;align-items:baseline;width:100%;
+  background:none;border:1px solid var(--rule);border-radius:10px;padding:9px 11px;margin-bottom:6px;
+  color:var(--text);text-align:left;cursor:pointer;font:inherit;touch-action:manipulation;
+}
+.ev:hover{border-color:var(--muted)}
+.ev .d{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+.ev .t{font-size:14px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .h{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.ev.on{border-color:var(--petrol);background:rgba(46,158,150,.09)}
+.ev.on .d{color:var(--petrol)}
+.evmsg{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);line-height:1.45;padding:2px}
+.evlink{background:none;border:none;padding:4px 2px;color:var(--petrol);font-family:"IBM Plex Mono",monospace;font-size:11.5px;cursor:pointer}
+
+/* Zusammenführen */
+details.merge{margin:-4px 0 18px}
+details.merge summary{cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--petrol);padding:2px;list-style:none}
+details.merge summary::-webkit-details-marker{display:none}
+details.merge .hint{margin:10px 0}
+details.merge select{
+  width:100%;background:var(--ink);border:1px solid var(--rule);border-radius:10px;color:var(--text);
+  font-family:"IBM Plex Sans",sans-serif;font-size:16px;padding:11px 12px;-webkit-appearance:none;appearance:none;
+}
+
+.flag{display:flex;gap:8px;margin-top:12px;padding:10px 12px;border-radius:9px;background:rgba(46,158,150,.09);border:1px solid rgba(46,158,150,.3);color:#9AD8D2;font-size:12.8px;line-height:1.4}
+
+.hist{margin-top:26px}
+.histhead{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-left:2px}
+details.item{background:var(--tape);border:1px solid var(--rule);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+details.item summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:baseline;gap:10px}
+details.item summary::-webkit-details-marker{display:none}
+summary .no{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--petrol);letter-spacing:.08em}
+summary .who{font-size:13.5px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+summary .amt{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
+details.item .body{padding:0 15px 15px;border-top:1px solid var(--rule);margin-top:2px;padding-top:4px}
+details.item[open] summary{padding-bottom:9px}
+details.item .body .go{margin-top:12px}
+
+@media (prefers-reduced-motion:no-preference){
+  .card,details.item{animation:in .22s ease both}
+  @keyframes in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+}
+.foot{margin:-4px 0 16px}
+.foot .go{margin-top:0}
+:focus-visible{outline:2px solid var(--petrol);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <div class="mark">Schätzung<span>.</span></div>
+    <div class="date" id="date">—</div>
+  </div>
+  <button class="hbtn" id="reset" hidden>Neue Schicht</button>
+</header>
+<div id="app"></div>
+</div>
+
+<script>
+/* ══════════ Speicher ══════════ */
+const KEY = "schaetzung_v1";
+const Store = {
+  async load(){
+    try{ if(window.storage){ const r = await window.storage.get(KEY); if(r&&r.value) return JSON.parse(r.value); } }catch(e){}
+    try{ const v = localStorage.getItem(KEY); if(v) return JSON.parse(v); }catch(e){}
+    return null;
+  },
+  async save(d){
+    const s = JSON.stringify(d);
+    try{ if(window.storage) await window.storage.set(KEY, s); }catch(e){}
+    try{ localStorage.setItem(KEY, s); }catch(e){}
+  }
+};
+
+/* ══════════ Helfer ══════════ */
+const nf  = new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const f   = v => nf.format(isFinite(v) ? v : 0);
+const eur = v => f(v) + " €";
+const pct = v => new Intl.NumberFormat("de-DE",{maximumFractionDigits:1}).format(v) + " %";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const cents = v => Math.round(v * 100);
+const keyOf = n => n.trim().toLocaleLowerCase("de-DE");
+const $ = id => document.getElementById(id);
+
+/* „12,50“, „12.50“, „1.250,00“ und „12“ werden alle verstanden. */
+function num(s){
+  s = String(s ?? "").trim().replace(/[\s€]/g, "");
+  if(!s) return NaN;
+  if(s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  const v = Number(s);
+  return isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : NaN;
+}
+
+function fmtDate(ts){
+  return new Date(ts).toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
+}
+const newShift = () => ({ start: Date.now(), title: "", job: "", eventId: null, entries: [], draft: "", actual: null, locked: false, lockedAt: null, done: false, histId: null });
+
+/* Rangliste eines Abends: nach Abstand in Cent, Gleichstand teilt sich den Platz. */
+function rank(entries, actual){
+  const rows = entries.map(e => {
+    const d = e.est - actual;
+    return { ...e, d, abs: Math.abs(cents(d)), p: actual > 0 ? Math.abs(d) / actual * 100 : 0 };
+  }).sort((a, b) => a.abs - b.abs || a.name.localeCompare(b.name, "de"));
+  rows.forEach((r, i) => { r.place = i && r.abs === rows[i-1].abs ? rows[i-1].place : i + 1; });
+  return rows;
+}
+
+function diffTxt(d){
+  if(cents(d) === 0) return "Volltreffer";
+  return (d > 0 ? "+" : "−") + eur(Math.abs(d));
+}
+
+/* compact: Zeilen im Verlauf. Die sind antippbar und öffnen die Einzelansicht.
+   Der Balken zeigt die Treffsicherheit: voll = genau das Ist, jedes Prozent
+   daneben kostet ein Prozent Balken. Wer 100 % oder mehr daneben liegt,
+   hat keinen Balken mehr. */
+function rankHtml(rows, compact){
+  return rows.map(r => `
+    <${compact ? `button type="button" data-person="${esc(keyOf(r.name))}"` : "div"} class="rk${r.place === 1 ? " top" : ""}${compact ? " compact" : ""}">
+      <div class="pl">${r.place}.</div>
+      <div class="nm"><b>${esc(r.name)}</b><span>geschätzt ${eur(r.est)}</span></div>
+      <div class="df">${diffTxt(r.d)}${compact || r.abs === 0 ? "" : `<small>${r.d > 0 ? "zu hoch" : "zu tief"} · ${pct(r.p)}</small>`}</div>
+      ${compact ? `<div class="chev">${CHEV}</div>` : `<div class="bar"><i style="width:${Math.max(0, 100 - r.p).toFixed(1)}%"></i></div>`}
+    </${compact ? "button" : "div"}>`).join("");
+}
+
+/* Wer zuerst einen Betrag nennt, behält ihn. Wer danach exakt denselben
+   Betrag (auf den Cent) nennt, muss sich etwas anderes überlegen.
+   Dasselbe gilt für doppelte Namen. */
+function check(entries){
+  const byAmt = new Map(), byName = new Set();
+  for(const e of entries) e.nameDup = false;
+  for(const e of entries){
+    const k = keyOf(e.name);
+    if(!k) continue;
+    if(byName.has(k)) e.nameDup = true; else byName.add(k);
+  }
+  for(const e of [...entries].sort((a, b) => (a.t || 0) - (b.t || 0))){
+    e.dupOf = null;
+    if(e.est == null) continue;
+    const k = cents(e.est), first = byAmt.get(k);
+    if(first) e.dupOf = first.name.trim() || "jemand anderes"; else byAmt.set(k, e);
+  }
+}
+const ready = c => c.entries.filter(e => e.est != null && !e.dupOf && !e.nameDup && e.name.trim());
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const newEntry = name => ({ id: uid(), name, raw: "", est: null, t: 0 });
+
+/* ══════════ Schichtplan lesen ══════════
+   Texterkennung läuft komplett auf dem Handy (Tesseract). Programm, Kern und
+   deutsche Sprachdaten liegen unter vendor/ mit im Repo; der Service Worker
+   hält sie vor, damit das Foto auch ohne Netz gelesen wird. Das Foto
+   verlässt das Gerät nicht. */
+const VENDOR = new URL("vendor/", location.href).href;
+let tessP = null;
+function loadTess(){
+  return tessP ||= new Promise((ok, no) => {
+    const s = document.createElement("script");
+    s.src = VENDOR + "tesseract.min.js";
+    s.onload = () => ok(window.Tesseract);
+    s.onerror = () => { tessP = null; no(new Error("Texterkennung konnte nicht geladen werden. Beim ersten Mal braucht sie Internet.")); };
+    document.head.appendChild(s);
+  });
+}
+
+/* Auf eine Größe bringen, mit der die Erkennung gut klarkommt (Fotos kleiner,
+   Screenshots größer), dann Graustufen mit mehr Kontrast. Blaue Schrift
+   (die verlinkten Nummern) wird dabei ganz schwarz, sonst landet sie im
+   Grau und geht mit der Unterstreichung zusammen unter. */
+async function prep(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error("Das Bild konnte nicht geöffnet werden.")); i.src = url; });
+    const long = Math.max(img.naturalWidth, img.naturalHeight);
+    const s = long > 2600 ? 2600 / long : long < 2000 ? Math.min(2, 2000 / long) : 1;
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(img.naturalWidth * s); cv.height = Math.round(img.naturalHeight * s);
+    const ctx = cv.getContext("2d");
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    const d = ctx.getImageData(0, 0, cv.width, cv.height), p = d.data;
+    for(let i = 0; i < p.length; i += 4){
+      const r = p[i], gr = p[i+1], b = p[i+2];
+      const blue = b > 90 && b - r > 45 && b - gr > 15;
+      const g = blue ? 0 : Math.max(0, Math.min(255, (0.299*r + 0.587*gr + 0.114*b - 128) * 1.35 + 128));
+      p[i] = p[i+1] = p[i+2] = g;
+    }
+    ctx.putImageData(d, 0, 0);
+    return cv;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/* Eine Personenzeile im Plan: „Vorname Nachname +4915637485933“. Alles andere
+   (Jobbeschreibung, Positionen, Uhrzeiten) hat keine lange Nummer am Ende
+   und fällt raus.
+   Die Nummer wird von hinten her eingesammelt: Wörter, die nach Ziffern
+   aussehen, zusammen mindestens neun Ziffern. Typische Verleser bei
+   unterstrichenem Text (O statt 0, l oder | statt 1) werden geglättet,
+   aber nur in Wörtern, die schon zwei echte Ziffern haben oder mit + anfangen. */
+const WORD  = /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſ][A-Za-zÀ-ÖØ-öø-ÿĀ-ſ'’-]+/g;
+const cap = w => w === w.toLocaleUpperCase("de-DE") ? w[0] + w.slice(1).toLocaleLowerCase("de-DE") : w;
+function digitsOf(tok){
+  const t = /^\+|\d.*\d/.test(tok)
+    ? tok.replace(/[OoD]/g, "0").replace(/[Il|!]/g, "1").replace(/B/g, "8").replace(/S/g, "5").replace(/Z/g, "2").replace(/g/g, "9")
+    : tok;
+  return /^[+]?[\d()\/.,_-]+$/.test(t) ? t.replace(/\D/g, "").length : -1;
+}
+function splitPhone(line){
+  const toks = line.replace(/\+/g, " +").trim().split(/\s+/);
+  while(toks.length && !/[\p{L}\d]/u.test(toks[toks.length - 1])) toks.pop();   /* Icons, Striche am Zeilenende */
+  let i = toks.length, n = 0;
+  while(i > 0){
+    const d = digitsOf(toks[i - 1]);
+    if(d < 0) break;
+    n += d; i--;
+  }
+  return n >= 9 ? toks.slice(0, i).join(" ") : null;
+}
+function parseNames(text){
+  const out = [];
+  let prev = "";
+  for(const line of text.split(/\r?\n/)){
+    const before = splitPhone(line);
+    if(before == null){ prev = line; continue; }
+    let words = before.match(WORD) || [];
+    if(!words.length) words = prev.match(WORD) || [];   /* Name eine Zeile höher */
+    prev = "";
+    if(!words.length) continue;
+    const name = words.slice(-2).map(cap).join(" ");
+    if(!out.some(n => keyOf(n) === keyOf(name))) out.push(name);
+  }
+  return out;
+}
+
+let ocr = null;   /* { busy, p, msg, err } – überlebt das Neuzeichnen */
+async function readPlan(file){
+  const c = S.cur;
+  ocr = { busy: true, p: 0, msg: "Texterkennung wird geladen …" }; render();
+  try{
+    const T = await loadTess();
+    const cv = await prep(file);
+    /* workerBlobURL aus: der Worker kommt so von derselben Adresse und
+       läuft damit durch den Service Worker, also auch offline. */
+    const w = await T.createWorker("deu", 1, {
+      workerPath: VENDOR + "worker.min.js", corePath: VENDOR, langPath: VENDOR, workerBlobURL: false,
+      logger: m => {
+      if(m.status === "recognizing text"){ ocr.p = m.progress; ocr.msg = `Lese Schichtplan … ${Math.round(m.progress * 100)} %`; paintOcr(); }
+    }});
+    const { data } = await w.recognize(cv);
+    await w.terminate();
+    const names = parseNames(data.text);
+    const have = new Set(c.entries.map(e => keyOf(e.name)));
+    const fresh = names.filter(n => !have.has(keyOf(n)));
+    c.entries.push(...fresh.map(newEntry));
+    ocr = names.length
+      ? { msg: `${names.length} ${names.length === 1 ? "Name" : "Namen"} erkannt${fresh.length < names.length ? `, ${names.length - fresh.length} davon schon in der Liste` : ""}. Bitte kurz gegenlesen.` }
+      : { err: true, msg: "Keine Zeile mit Name und Telefonnummer erkannt. Foto gerader und näher aufnehmen oder Namen von Hand ergänzen." };
+    ocr.text = data.text;
+    save();
+  }catch(e){
+    ocr = { err: true, msg: e.message || "Das hat nicht geklappt." };
+  }
+  render();
+}
+function paintOcr(){
+  const bar = $("ocrbar"), txt = $("ocrtxt");
+  if(bar) bar.style.width = Math.round((ocr.p || 0) * 100) + "%";
+  if(txt) txt.textContent = ocr.msg;
+}
+
+/* ══════════ Events der Motorworld ══════════
+   Dieselbe öffentliche Schnittstelle, aus der auch Zenith seine Termine holt.
+   Gezeigt werden heute und die nächsten Tage. Die zuletzt geladene Liste
+   bleibt auf dem Gerät, damit es ohne Netz trotzdem Vorschläge gibt. */
+const MW = "https://muenchen.motorworld.de/wp-json/wp/v2/";
+const EV_KEY = "schaetzung_events_v1";
+const EV_VOR = 7, EV_MAX_TAGE = 10;
+let EV = { at: 0, list: [] };
+try{ EV = JSON.parse(localStorage.getItem(EV_KEY)) || EV; }catch(e){}
+let evState = "", evOpen = false;
+
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const dayPlus = n => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return d; };
+const mwDay = v => { const m = String(v || "").trim().match(/^(\d{4})-?(\d{2})-?(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : ""; };
+const unesc = h => { const t = document.createElement("textarea"); t.innerHTML = h; return t.value; };
+/* „(ausverkauft)“ und Ähnliches gehört nicht in den Schichttitel */
+const cleanTitle = t => unesc(t || "").replace(/\s*\((?:[^)]*ausverkauft|abgesagt|verlegt|zusatzshow)[^)]*\)\s*/gi, " ").replace(/\s+/g, " ").trim();
+
+async function mwPages(path){
+  const first = await fetch(MW + path + "&page=1");
+  if(!first.ok) throw new Error(first.status);
+  const out = await first.json();
+  const pages = Math.min(10, +first.headers.get("X-WP-TotalPages") || 1);
+  for(let p = 2; p <= pages; p++) out.push(...await (await fetch(MW + path + "&page=" + p)).json());
+  return out;
+}
+
+async function loadEvents(force){
+  if(!force && Date.now() - EV.at < 3600e3) return;
+  evState = "laden"; paintEvents();
+  try{
+    const [evs, cats] = await Promise.all([
+      mwPages("veranstaltungen?per_page=100&_fields=id,title,categories,acf.termin,acf.termin_start,acf.mehrtaegig,acf.farbe_balken"),
+      mwPages("categories?per_page=100&_fields=id,name").catch(() => [])
+    ]);
+    const hall = Object.fromEntries(cats.map(c => [c.id, unesc(c.name || "")]));
+    const fresh = [];
+    for(const e of evs){
+      const acf = e.acf || {};
+      if(String(acf.farbe_balken || "").toLowerCase() === "grau") continue;   /* fällt aus */
+      const a = mwDay(acf.termin_start), b = mwDay(acf.termin);
+      const von = a && b ? (a < b ? a : b) : (a || b);
+      if(!von) continue;
+      const bis = String(acf.mehrtaegig || "").toLowerCase() === "ja" && a && b ? (a < b ? b : a) : von;
+      const title = cleanTitle(e.title && e.title.rendered);
+      const halls = (e.categories || []).map(id => hall[id]).filter(Boolean).join(", ");
+      const d = new Date(von + "T12:00");
+      for(let i = 0; i < EV_MAX_TAGE && ymd(d) <= bis; i++, d.setDate(d.getDate() + 1))
+        fresh.push({ id: e.id + "@" + ymd(d), day: ymd(d), title, hall: halls });
+    }
+    EV = { at: Date.now(), list: fresh };
+    try{ localStorage.setItem(EV_KEY, JSON.stringify(EV)); }catch(e){}
+    evState = "";
+  }catch(e){
+    evState = "fehler";
+  }
+  paintEvents();
+}
+
+function dayLabel(day){
+  const diff = Math.round((new Date(day + "T12:00") - dayPlus(0)) / 864e5);
+  if(diff === 0) return "Heute";
+  if(diff === 1) return "Morgen";
+  return new Date(day + "T12:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+}
+
+function eventsInner(){
+  const c = S.cur;
+  const lo = ymd(new Date()), hi = ymd(dayPlus(EV_VOR));
+  const items = EV.list.filter(x => x.day >= lo && x.day <= hi)
+    .sort((a, b) => a.day.localeCompare(b.day) || a.hall.localeCompare(b.hall));
+  const row = x => `<button type="button" class="ev${c.eventId === x.id ? " on" : ""}" data-ev="${esc(x.id)}">
+      <span class="d">${esc(dayLabel(x.day))}</span><span class="t">${esc(x.title)}</span><span class="h">${esc(x.hall)}</span></button>`;
+
+  const picked = c.eventId && items.find(x => x.id === c.eventId);
+  if(picked && !evOpen)
+    return row(picked) + `<button type="button" class="evlink" data-evopen>Anderes Event wählen</button>`;
+
+  if(!items.length){
+    if(evState === "laden") return `<div class="evmsg">Events werden geladen …</div>`;
+    if(evState === "fehler") return `<div class="evmsg">Events konnten nicht geladen werden. Kein Netz? Titel einfach selbst eintippen. <button type="button" class="evlink" data-evretry>Nochmal versuchen</button></div>`;
+    return `<div class="evmsg">Keine Events in den nächsten Tagen gefunden.</div>`;
+  }
+  return items.map(row).join("")
+       + (evState === "fehler" ? `<div class="evmsg">Gerade kein Netz, das sind die zuletzt geladenen Events.</div>` : "");
+}
+function paintEvents(){
+  const box = $("events");
+  if(box) box.innerHTML = eventsInner();
+}
+
+/* ══════════ Zustand ══════════ */
+let S = { cur: newShift(), hist: [] };
+const save = () => Store.save(S);
+
+/* ══════════ Ansicht ══════════
+   Drei Stände einer Schicht:
+   Seite 1 (vor der Schicht)  – Namen einlesen, Schätzungen eintragen, „Weiter“
+   Seite 2 (nach der Schicht) – c.locked: Schätzungen stehen fest, Ergebnis eintragen
+   Ergebnis                   – c.done: Rangliste und Text zum Teilen */
+function render(){
+  const c = S.cur;
+  if(view && renderPerson(view)) return;
+  view = null;
+  $("date").textContent = fmtDate(c.start);
+  $("reset").hidden = !(c.entries.length || c.locked || c.done);
+
+  let h = statusHtml();
+  h += c.done ? resultHtml() : c.locked ? resolveHtml() + lockedHtml() : estimateHtml();
+  h += histHtml();
+  $("app").innerHTML = h;
+  bind();
+  refresh();
+}
+
+/* Markierungen, Zähler und Knöpfe nachziehen, ohne die Felder anzufassen. */
+function refresh(){
+  const c = S.cur;
+  check(c.entries);
+  const ok = ready(c);
+  const avg = ok.length ? ok.reduce((s, e) => s + e.est, 0) / ok.length : NaN;
+  $("stN").textContent = c.entries.length ? `${ok.length}/${c.entries.length}` : "0";
+  $("stN").classList.toggle("dim", !ok.length);
+  $("stAvg").textContent = ok.length ? f(avg) : "—";
+  $("stAvg").classList.toggle("dim", !ok.length);
+  if(c.done) return;
+
+  if(c.locked){
+    const v = num($("act").value);
+    $("act").classList.toggle("bad", $("act").value.trim() !== "" && isNaN(v));
+    $("resolve").disabled = isNaN(v) || v <= 0;
+    return;
+  }
+
+  let dups = 0;
+  for(const e of c.entries){
+    const row = document.querySelector(`.pp[data-id="${e.id}"]`);
+    if(!row) continue;
+    const pn = row.querySelector(".pn"), pe = row.querySelector(".pe input");
+    const badNum = e.raw.trim() !== "" && e.est == null;
+    pn.classList.toggle("bad", e.nameDup);
+    pe.classList.toggle("bad", badNum || !!e.dupOf);
+    pe.classList.toggle("ok", e.est != null && !e.dupOf);
+    row.querySelector(".ps").textContent =
+        e.dupOf     ? `${eur(e.est)} hat schon ${e.dupOf} geschätzt. Bitte einen anderen Betrag.`
+      : e.nameDup   ? "Der Name steht schon in der Liste."
+      : badNum      ? "Das ist keine Zahl."
+      : e.est != null && !e.name.trim() ? "Name fehlt."
+      : "";
+    if(e.dupOf || e.nameDup) dups++;
+  }
+
+  const open = c.entries.filter(e => e.est == null && e.name.trim()).length;
+  $("cnt").textContent = !c.entries.length ? "" :
+    open ? `${open} ${open === 1 ? "Person hat" : "Personen haben"} noch nicht geschätzt` : "Alle haben geschätzt.";
+
+  $("next").disabled = !ok.length || !!dups;
+  $("nextsub").textContent =
+      !ok.length ? "Erst mindestens eine Schätzung eintragen."
+    : dups       ? "Erst die doppelten Einträge oben klären."
+    : open       ? "Wer nicht geschätzt hat, ist bei der Auflösung nicht dabei."
+    : "";
+}
+
+function statusHtml(){
+  const c = S.cur;
+  return `<div class="status">
+    <div><div class="k">Geschätzt</div><div class="n" id="stN"></div></div>
+    <div><div class="k">Schnitt</div><div class="n" id="stAvg"></div></div>
+    <div><div class="k">Ist</div><div class="n${c.done ? " hot" : " dim"}">${c.done ? f(c.actual) : "?"}</div></div>
+  </div>`;
+}
+
+const CAM = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`;
+const SHARE = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>`;
+
+function rowHtml(e){
+  return `<div class="pp" data-id="${e.id}">
+    <input class="pn" value="${esc(e.name)}" placeholder="Name" list="names" autocomplete="off" autocapitalize="words" maxlength="40" aria-label="Name">
+    <div class="pe"><input inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="—" value="${esc(e.raw)}" aria-label="Schätzung von ${esc(e.name)}"><span>€</span></div>
+    <button class="x" aria-label="${esc(e.name)} entfernen">×</button>
+    <div class="ps"></div>
+  </div>`;
+}
+
+function estimateHtml(){
+  const c = S.cur, has = c.entries.length > 0;
+  const known = [...new Set(S.hist.flatMap(h => h.entries.map(e => e.name)))];
+  const busy = ocr && ocr.busy;
+  const bars = [...new Set(S.hist.slice().reverse().map(h => (h.job || "").trim()).filter(Boolean))].slice(0, 8);
+  return `<div class="card">
+    <div class="eyebrow">01 · Vor der Schicht</div>
+    <h2>Schicht</h2>
+    <p class="hint">Wie heißt der Abend, und an welcher Bar arbeitet ihr?</p>
+    <div class="field"><label for="title">Titel</label>
+      <div class="inp"><input id="title" class="txt" autocomplete="off" maxlength="60" placeholder="z. B. Firmenfeier Halle 3" value="${esc(c.title)}"></div>
+      <div class="events" id="events"></div>
+    </div>
+    <div class="field" style="margin-bottom:0"><label for="job">Bar</label>
+      <div class="inp"><input id="job" class="txt" autocomplete="off" maxlength="40" placeholder="z. B. Hauptbar" value="${esc(c.job)}"></div>
+      ${bars.length ? `<div class="chips">${bars.map(b => `<button type="button" class="chip${keyOf(b) === keyOf(c.job || "") ? " on" : ""}" data-bar="${esc(b)}">${esc(b)}</button>`).join("")}</div>` : ""}
+    </div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">02 · Team</div>
+    <h2>Schätzungen</h2>
+    <p class="hint">Schichtplan fotografieren, dann neben jedem Namen eintragen, was pro Person rauskommt. Das Foto wird nur auf diesem Handy gelesen und nicht gespeichert.</p>
+    <label class="go photo${has ? " ghost" : ""}" ${busy ? 'aria-disabled="true" style="pointer-events:none;opacity:.6"' : ""}>
+      <input type="file" id="photo" accept="image/*" hidden>${CAM}${has ? "Weiteres Foto einlesen" : "Schichtplan fotografieren"}
+    </label>
+    ${ocr ? `<div class="ocr${ocr.err ? " err" : ""}">${ocr.busy ? `<div class="ocrbar"><i id="ocrbar" style="width:${Math.round((ocr.p || 0) * 100)}%"></i></div>` : ""}<div class="sub" id="ocrtxt">${esc(ocr.msg)}</div>${ocr.text != null ? `<details class="raw"${ocr.err ? " open" : ""}><summary>Was die Texterkennung gelesen hat</summary><pre>${esc(ocr.text.trim() || "(nichts)")}</pre></details>` : ""}</div>` : ""}
+    <div class="perf"></div>
+    <datalist id="names">${known.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    <div id="people">${has ? c.entries.map(rowHtml).join("") : `<div class="empty">Noch keine Namen. Foto einlesen oder von Hand hinzufügen.</div>`}</div>
+    <div class="addrow"><span class="who" id="cnt"></span><button id="addp">+ Name</button></div>
+  </div>
+  <div class="foot">
+    <button class="go" id="next" disabled>Weiter · Schicht starten</button>
+    <div class="sub" id="nextsub" style="text-align:center"></div>
+  </div>`;
+}
+
+/* „Firmenfeier Halle 3 · Hauptbar“ – leer, wenn beides fehlt. */
+const metaTxt = s => [(s.title || "").trim(), (s.job || "").trim()].filter(Boolean).join(" · ");
+const metaHtml = s => metaTxt(s) ? `<div class="meta">${esc(metaTxt(s))}</div>` : "";
+
+function resolveHtml(){
+  const c = S.cur;
+  return `<div class="card">
+    <div class="eyebrow">Nach der Schicht</div>
+    ${metaHtml(c)}
+    <h2>Was ist rausgekommen?</h2>
+    <p class="hint">Sobald feststeht, was pro Person rauskommt, hier eintragen und auflösen.</p>
+    <div class="field"><label for="act">Trinkgeld pro Person</label>
+      <div class="inp"><input id="act" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0,00" value="${esc(c.draft)}"><span class="cur">€</span></div>
+      <div class="sub" id="actsub"></div>
+    </div>
+    <button class="go" id="resolve" disabled>Auflösen</button>
+  </div>`;
+}
+
+function lockedHtml(){
+  const c = S.cur;
+  const ok = ready(c);
+  const skipped = c.entries.filter(e => !ok.includes(e) && e.name.trim()).map(e => e.name.trim());
+  const when = c.lockedAt ? new Date(c.lockedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "";
+  return `<div class="card">
+    <div class="eyebrow">Abgegeben${when ? ` · fest seit ${when} Uhr` : ""}</div>
+    <div class="beleg">${ok.map(e => `<div class="r"><span class="l"><b>${esc(e.name)}</b></span><span class="dots"></span><span class="v">${eur(e.est)}</span></div>`).join("")}</div>
+    ${skipped.length ? `<div class="sub" style="margin-top:10px">Ohne Schätzung: ${esc(skipped.join(", "))}</div>` : ""}
+    <button class="go ghost" id="edit" style="margin-top:14px">Schätzungen bearbeiten</button>
+  </div>`;
+}
+
+function resultHtml(){
+  const c = S.cur;
+  const rows = rank(ready(c), c.actual);
+  const winners = rows.filter(r => r.place === 1).map(r => esc(r.name));
+  return `<div class="card">
+    <div class="eyebrow">Ergebnis</div>
+    ${metaHtml(c)}
+    <div class="big"><div class="lbl">Trinkgeld<br>pro Person</div><div class="amt">${eur(c.actual)}</div></div>
+    ${rankHtml(rows, false)}
+    <div class="flag">${winners.length > 1 ? winners.join(" und ") + " liegen gleichauf vorn." : winners[0] + " war am nächsten dran."}</div>
+    <button class="go photo" id="share" style="margin-top:14px">${SHARE}Als Text teilen</button>
+    <button class="go ghost" id="fix" style="margin-top:10px">Ergebnis korrigieren</button>
+  </div>`;
+}
+
+function histHtml(){
+  if(!S.hist.length) return backupHtml();
+  let h = `<div class="hist"><div class="histhead">Verlauf · ${S.hist.length} ${S.hist.length === 1 ? "Abend" : "Abende"}</div>`;
+  S.hist.slice().reverse().forEach((s, i) => {
+    const rows = rank(s.entries, s.actual);
+    const win = rows.filter(r => r.place === 1).map(r => r.name).join(", ");
+    h += `<details class="item">
+      <summary><span class="no">#${S.hist.length - i}</span><span class="who">${esc(fmtDate(s.start))} · ${esc(metaTxt(s) || win)}</span><span class="amt">${eur(s.actual)}</span></summary>
+      <div class="body">${rankHtml(rows, true)}
+        <button class="go ghost photo" data-share="${s.id}">${SHARE}Als Text teilen</button>
+        <button class="go ghost warn" data-drop="${s.id}">Abend löschen</button>
+      </div>
+    </details>`;
+  });
+  return h + `</div>` + backupHtml();
+}
+
+/* ══════════ Backup ══════════
+   Alles liegt nur im Speicher dieses Browsers. Die Datei sichert Verlauf und
+   die laufende Schicht; Laden führt zusammen statt zu ersetzen, damit ein
+   altes Backup keine neueren Abende wegwischt. */
+const DL = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>`;
+const UL = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>`;
+let bkMsg = "";
+
+function backupHtml(){
+  const days = S.backupAt ? Math.floor((Date.now() - S.backupAt) / 864e5) : null;
+  const last = days == null ? "Noch kein Backup gespeichert."
+    : `Letztes Backup: ${days === 0 ? "heute" : days === 1 ? "gestern" : `vor ${days} Tagen`}.`;
+  return `<div class="hist"><div class="histhead">Daten</div>
+    <div class="card">
+      <p class="hint">Verlauf und Schätzungen liegen nur auf diesem Handy. Ein Backup sichert alles als Datei, zum Beispiel in iCloud Drive. Damit kommst du auch auf ein neues Handy.</p>
+      <button class="go ghost photo" id="exp">${DL}Backup speichern</button>
+      <label class="go ghost photo" style="margin-top:10px"><input type="file" id="imp" accept=".json,application/json" hidden>${UL}Backup laden</label>
+      <div class="sub${days == null && S.hist.length || days > 30 ? " bad" : ""}" id="bkmsg">${esc(bkMsg || last)}</div>
+    </div></div>`;
+}
+
+async function exportBackup(){
+  const stamp = ymd(new Date());
+  const data = JSON.stringify({ app: "schaetzung", v: 1, at: Date.now(), cur: S.cur, hist: S.hist }, null, 1);
+  const file = new File([data], `schaetzung-backup-${stamp}.json`, { type: "application/json" });
+  let done = false;
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    try{ await navigator.share({ files: [file], title: "Schätzung Backup" }); done = true; }
+    catch(e){ if(e && e.name === "AbortError") return; }
+  }
+  if(!done){
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(file); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  S.backupAt = Date.now();
+  bkMsg = `Backup mit ${S.hist.length} ${S.hist.length === 1 ? "Abend" : "Abenden"} gespeichert.`;
+  save(); render();
+}
+
+async function importBackup(file){
+  let d;
+  try{ d = JSON.parse(await file.text()); }catch(e){ d = null; }
+  if(!d || d.app !== "schaetzung" || !Array.isArray(d.hist)){
+    bkMsg = "Das ist keine Backup-Datei von diesem Tool."; render(); return;
+  }
+  const have = new Set(S.hist.map(h => h.id));
+  const neu = d.hist.filter(h => h && h.id && !have.has(h.id));
+  const curLeer = !S.cur.entries.length && !S.cur.locked && !S.cur.done;
+  const curDazu = curLeer && d.cur && (d.cur.entries || []).length && !d.cur.done;
+  if(!neu.length && !curDazu){ bkMsg = "Nichts Neues im Backup, alles schon da."; render(); return; }
+  if(!confirm(`${neu.length} ${neu.length === 1 ? "Abend" : "Abende"} aus dem Backup übernehmen${curDazu ? " und die offene Schicht daraus fortsetzen" : ""}?`)) return;
+  S.hist = [...S.hist, ...neu].sort((a, b) => a.start - b.start);
+  if(curDazu) S.cur = d.cur;
+  bkMsg = `${neu.length} ${neu.length === 1 ? "Abend" : "Abende"} übernommen.`;
+  save(); render();
+}
+
+/* ══════════ Einzelansicht ══════════
+   Alle Abende einer Person, neueste zuerst. Läuft über den Browser-Verlauf,
+   damit Wischen-zurück auf dem iPhone wieder zum Verlauf führt. */
+let view = null;
+const CHEV = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>`;
+
+function openPerson(k){
+  view = k;
+  try{ history.pushState({ person: k }, ""); }catch(e){}
+  render();
+  window.scrollTo(0, 0);
+}
+function closePerson(){
+  if(history.state && history.state.person){ history.back(); return; }
+  view = null; render();
+}
+window.addEventListener("popstate", e => {
+  view = (e.state && e.state.person) || null;
+  render();
+});
+
+function renderPerson(k){
+  const list = S.hist.map(h => {
+    const rows = rank(h.entries, h.actual);
+    const r = rows.find(x => keyOf(x.name) === k);
+    return r && { h, r, n: rows.length };
+  }).filter(Boolean).reverse();
+  if(!list.length) return false;
+
+  const name = list[0].r.name;
+  const wins = list.filter(x => x.r.place === 1).length;
+  const avgP = list.reduce((s, x) => s + x.r.p, 0) / list.length;
+  const avgE = list.reduce((s, x) => s + Math.abs(x.r.d), 0) / list.length;
+  const high = list.filter(x => cents(x.r.d) > 0).length, low = list.filter(x => cents(x.r.d) < 0).length;
+  const tend = high > low ? "schätzt eher zu hoch" : low > high ? "schätzt eher zu tief" : "mal drüber, mal drunter";
+
+  /* Je Bar nur, wenn es mehr als eine gibt */
+  const byBar = new Map();
+  for(const x of list){
+    const b = (x.h.job || "").trim() || "ohne Bar";
+    const v = byBar.get(b) || { n: 0, p: 0 };
+    v.n++; v.p += x.r.p; byBar.set(b, v);
+  }
+
+  $("date").textContent = "Einzelansicht";
+  $("reset").hidden = true;
+  $("app").innerHTML = `
+    <button type="button" class="back" id="back">← Zurück</button>
+    <div class="card">
+      <div class="eyebrow">${list.length} ${list.length === 1 ? "Abend" : "Abende"} · ${esc(tend)}</div>
+      <h2 class="pname">${esc(name)}</h2>
+      <div class="status inner">
+        <div><div class="k">Siege</div><div class="n${wins ? " hot" : ""}">${wins}</div></div>
+        <div><div class="k">Ø daneben</div><div class="n">${pct(avgP)}</div></div>
+        <div><div class="k">Ø in €</div><div class="n">${f(avgE)}</div></div>
+      </div>
+      ${byBar.size > 1 ? `<div class="perf"></div><div class="beleg">${[...byBar].sort((a, b) => a[1].p / a[1].n - b[1].p / b[1].n).map(([b, v]) =>
+        `<div class="r"><span class="l">${esc(b)} · ${v.n}×</span><span class="dots"></span><span class="v">Ø ${pct(v.p / v.n)}</span></div>`).join("")}</div>` : ""}
+    </div>
+    ${mergeHtml(k, name)}
+    <div class="histhead">Alle Abende</div>
+    <div class="card board">${list.map(({ h, r, n }) => `
+      <div class="rk${r.place === 1 ? " top" : ""}">
+        <div class="pl">${r.place}.</div>
+        <div class="nm"><b>${esc(metaTxt(h) || "Schicht")}</b><span class="two">${esc(new Date(h.start).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", year: "2-digit" }))} · von ${n}</span><span class="two">${f(r.est)} → Ist ${eur(h.actual)}</span></div>
+        <div class="df">${diffTxt(r.d)}${r.abs ? `<small>${pct(r.p)}</small>` : ""}</div>
+      </div>`).join("")}
+    </div>`;
+  $("back").addEventListener("click", closePerson);
+  bindMerge(k, name);
+  return true;
+}
+
+/* Die Texterkennung liest denselben Namen manchmal leicht anders („Ayse“
+   statt „Ayşe“), dann zerfällt eine Person im Verlauf in zwei. Hier laufen
+   alle Abende des anderen Namens unter diesen. Stehen beide am selben Abend
+   im Verlauf, sind es zwei Menschen – das wird abgelehnt. */
+let mergeMsg = "";
+function otherNames(k){
+  const m = new Map();
+  for(const h of S.hist) for(const e of h.entries){
+    const key = keyOf(e.name);
+    if(key === k) continue;
+    const v = m.get(key) || { name: e.name, n: 0 };
+    v.n++; m.set(key, v);
+  }
+  return [...m].sort((a, b) => a[1].name.localeCompare(b[1].name, "de"));
+}
+function mergeHtml(k, name){
+  const others = otherNames(k);
+  if(!others.length) return "";
+  return `<details class="merge"${mergeMsg ? " open" : ""}>
+    <summary>Doppelt im Verlauf? Mit anderem Namen zusammenführen</summary>
+    <p class="hint">Alle Abende des gewählten Namens laufen danach unter „${esc(name)}“.</p>
+    <select id="mergeSel"><option value="">Name wählen …</option>${others.map(([key, v]) =>
+      `<option value="${esc(key)}">${esc(v.name)} (${v.n} ${v.n === 1 ? "Abend" : "Abende"})</option>`).join("")}</select>
+    <button class="go ghost" id="mergeBtn" disabled style="margin-top:10px">Zusammenführen</button>
+    <div class="sub${/^Geht nicht/.test(mergeMsg) ? " bad" : ""}" id="mergeMsg">${esc(mergeMsg)}</div>
+  </details>`;
+}
+function bindMerge(k, name){
+  const sel = $("mergeSel"), btn = $("mergeBtn");
+  if(!sel) return;
+  mergeMsg = "";
+  sel.addEventListener("change", () => { btn.disabled = !sel.value; });
+  btn.addEventListener("click", () => {
+    const other = sel.value;
+    if(!other) return;
+    const otherName = sel.options[sel.selectedIndex].text.replace(/\s*\(\d+ Abende?\)$/, "");
+    const clash = S.hist.find(h => h.entries.some(e => keyOf(e.name) === k) && h.entries.some(e => keyOf(e.name) === other));
+    if(clash){
+      mergeMsg = `Geht nicht: am ${fmtDate(clash.start)} haben beide geschätzt, das sind zwei verschiedene Personen.`;
+      renderPerson(k); return;
+    }
+    if(!confirm(`„${otherName}“ in „${name}“ aufgehen lassen?`)) return;
+    let n = 0;
+    for(const h of S.hist) for(const e of h.entries) if(keyOf(e.name) === other){ e.name = name; n++; }
+    for(const e of S.cur.entries) if(keyOf(e.name) === other) e.name = name;
+    save();
+    mergeMsg = `${n} ${n === 1 ? "Abend" : "Abende"} von „${otherName}“ übernommen.`;
+    renderPerson(k);
+  });
+}
+
+/* ══════════ Text zum Teilen ══════════
+   Nur dieser eine Abend. Sternchen sind fett in WhatsApp. */
+function shareText(s){
+  const rows = rank(s.entries, s.actual);
+  const medal = ["🥇", "🥈", "🥉"];
+  const lines = rows.map(r =>
+    `${medal[r.place - 1] || "    "} ${r.place}. ${r.name.trim()}: ${eur(r.est)} (${cents(r.d) === 0 ? "Volltreffer" : diffTxt(r.d)})`);
+  return [
+    `*Trinkgeld-Schätzung · ${fmtDate(s.start)}*`,
+    ...(metaTxt(s) ? [metaTxt(s)] : []),
+    `Rausgekommen: *${eur(s.actual)}* pro Person`,
+    "",
+    ...lines
+  ].join("\n");
+}
+
+async function share(text, btn){
+  if(navigator.share){
+    try{ await navigator.share({ text }); return; }
+    catch(e){ if(e && e.name === "AbortError") return; }
+  }
+  let ok = false;
+  try{ await navigator.clipboard.writeText(text); ok = true; }catch(e){}
+  if(!ok){
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ ok = document.execCommand("copy"); }catch(e){}
+    ta.remove();
+  }
+  const old = btn.innerHTML;
+  btn.innerHTML = ok ? "Kopiert – jetzt in WhatsApp einfügen" : "Kopieren hat nicht geklappt";
+  setTimeout(() => { btn.innerHTML = old; }, 2200);
+}
+
+/* ══════════ Bedienung ══════════ */
+function bind(){
+  const c = S.cur;
+
+  if(!c.done && !c.locked){
+    $("title").addEventListener("input", e => {
+      c.title = e.target.value;
+      if(c.eventId){ c.eventId = null; paintEvents(); }
+      save();
+    });
+    paintEvents();
+    $("events").addEventListener("click", ev => {
+      const b = ev.target.closest("button");
+      if(!b) return;
+      if("evopen" in b.dataset){ evOpen = true; paintEvents(); return; }
+      if("evretry" in b.dataset){ loadEvents(true); return; }
+      const x = EV.list.find(e => e.id === b.dataset.ev);
+      if(!x) return;
+      /* Der Abend bekommt das Datum des Events */
+      c.title = x.title; c.eventId = x.id; c.start = new Date(x.day + "T12:00").getTime();
+      $("title").value = x.title;
+      $("date").textContent = fmtDate(c.start);
+      evOpen = false;
+      save(); paintEvents();
+    });
+    $("job").addEventListener("input", e => {
+      c.job = e.target.value; save();
+      document.querySelectorAll(".chip").forEach(ch => ch.classList.toggle("on", keyOf(ch.dataset.bar) === keyOf(c.job)));
+    });
+    document.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+      c.job = ch.dataset.bar; $("job").value = c.job; save();
+      document.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === ch));
+    }));
+    $("photo").addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      if(file) readPlan(file);
+    });
+    $("addp").addEventListener("click", () => {
+      c.entries.push(newEntry(""));
+      save(); render();
+      const rows = document.querySelectorAll(".pp .pn");
+      rows[rows.length - 1].focus();
+    });
+
+    /* Tippen zeichnet nicht neu, sonst springt der Cursor raus. */
+    const people = $("people");
+    const entryOf = el => c.entries.find(e => e.id === el.closest(".pp").dataset.id);
+    people.addEventListener("input", ev => {
+      const e = entryOf(ev.target);
+      if(ev.target.classList.contains("pn")){
+        e.name = ev.target.value;
+      } else {
+        e.raw = ev.target.value;
+        const v = num(e.raw);
+        const before = e.est;
+        e.est = isNaN(v) ? null : v;
+        if(e.est !== before) e.t = Date.now();
+      }
+      save(); refresh();
+    });
+    people.addEventListener("keydown", ev => {
+      if(ev.key !== "Enter" || ev.target.classList.contains("pn")) return;
+      ev.preventDefault();
+      const all = [...people.querySelectorAll(".pe input")];
+      const next = all[all.indexOf(ev.target) + 1];
+      next ? next.focus() : ev.target.blur();
+    });
+    people.addEventListener("click", ev => {
+      if(!ev.target.closest(".x")) return;
+      const e = entryOf(ev.target);
+      c.entries = c.entries.filter(x => x !== e);
+      save(); render();
+    });
+
+    $("next").addEventListener("click", () => {
+      if($("next").disabled) return;
+      c.locked = true;
+      c.lockedAt = Date.now();
+      ocr = null;
+      save(); render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  if(c.locked && !c.done){
+    const act = $("act"), res = $("resolve");
+    const doResolve = () => {
+      if(res.disabled) return;
+      c.actual = num(act.value);
+      c.done = true;
+      c.histId = c.histId || uid();
+      S.hist.push({ id: c.histId, start: c.start, title: (c.title || "").trim(), job: (c.job || "").trim(), actual: c.actual, entries: ready(c).map(e => ({ name: e.name.trim(), est: e.est })) });
+      save(); render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    act.addEventListener("input", () => { c.draft = act.value; refresh(); save(); });
+    act.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); doResolve(); } });
+    res.addEventListener("click", doResolve);
+    $("edit").addEventListener("click", () => {
+      c.locked = false;
+      save(); render();
+    });
+  }
+
+  if(c.done){
+    $("share").addEventListener("click", ev => {
+      share(shareText({ start: c.start, title: c.title, job: c.job, actual: c.actual, entries: ready(c) }), ev.currentTarget);
+    });
+    $("fix").addEventListener("click", () => {
+      S.hist = S.hist.filter(h => h.id !== c.histId);
+      c.done = false;
+      c.draft = f(c.actual);
+      save(); render();
+      $("act").focus();
+    });
+  }
+
+  $("exp").addEventListener("click", exportBackup);
+  $("imp").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if(f) importBackup(f); });
+  document.querySelectorAll("[data-person]").forEach(b => b.addEventListener("click", () => openPerson(b.dataset.person)));
+  document.querySelectorAll("[data-share]").forEach(b => b.addEventListener("click", () => {
+    const s = S.hist.find(h => h.id === b.dataset.share);
+    if(s) share(shareText(s), b);
+  }));
+  document.querySelectorAll("[data-drop]").forEach(b => b.addEventListener("click", () => {
+    if(!confirm("Diesen Abend aus dem Verlauf löschen?")) return;
+    S.hist = S.hist.filter(h => h.id !== b.dataset.drop);
+    if(c.histId === b.dataset.drop) S.cur = newShift();
+    save(); render();
+  }));
+}
+
+$("reset").addEventListener("click", () => {
+  const c = S.cur;
+  if(!c.done && c.entries.length && !confirm("Die Schätzungen dieser Schicht verwerfen?")) return;
+  S.cur = newShift();
+  ocr = null;
+  save(); render();
+});
+
+(async () => {
+  const d = await Store.load();
+  if(d && d.cur){
+    S = { cur: d.cur, hist: d.hist || [] };
+    /* Einträge aus Version 1 hatten nur name und est */
+    S.cur.entries.forEach((e, i) => { if(e.raw == null){ e.raw = e.est != null ? f(e.est) : ""; e.t = i + 1; } });
+  }
+  view = (history.state && history.state.person) || null;
+  loadEvents();
+  render();
+})();
+
+/* ══════════ Offline-Betrieb ══════════ */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+/* Speicher als „dauerhaft“ anmelden, damit der Browser ihn nicht von sich
+   aus aufräumt. Auf dem iPhone wirkt das vor allem als Homescreen-App. */
+try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
+</script>
+</body>
+</html>
