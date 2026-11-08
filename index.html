@@ -352,7 +352,10 @@ function loadTess(){
 /* Auf eine Größe bringen, mit der die Erkennung gut klarkommt (Fotos kleiner,
    Screenshots größer), dann Graustufen mit mehr Kontrast. Blaue Schrift
    (die verlinkten Nummern) wird dabei ganz schwarz, sonst landet sie im
-   Grau und geht mit der Unterstreichung zusammen unter. */
+   Grau und geht mit der Unterstreichung zusammen unter.
+   Screenshots im Darkmode werden vorher umgedreht, damit am Ende immer
+   dunkle Schrift auf hellem Grund steht. Ohne das würde die blaue Nummer
+   schwarz auf schwarzem Hintergrund und wäre für die Erkennung weg. */
 async function prep(file){
   const url = URL.createObjectURL(file);
   try{
@@ -364,10 +367,15 @@ async function prep(file){
     const ctx = cv.getContext("2d");
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     const d = ctx.getImageData(0, 0, cv.width, cv.height), p = d.data;
+    const lum = i => 0.299*p[i] + 0.587*p[i+1] + 0.114*p[i+2];
+    let sum = 0, n = 0;
+    for(let i = 0; i < p.length; i += 4 * 16){ sum += lum(i); n++; }   /* jedes 16. Pixel reicht */
+    const dark = sum / n < 110;
     for(let i = 0; i < p.length; i += 4){
       const r = p[i], gr = p[i+1], b = p[i+2];
       const blue = b > 90 && b - r > 45 && b - gr > 15;
-      const g = blue ? 0 : Math.max(0, Math.min(255, (0.299*r + 0.587*gr + 0.114*b - 128) * 1.35 + 128));
+      const l = dark ? 255 - lum(i) : lum(i);
+      const g = blue ? 0 : Math.max(0, Math.min(255, (l - 128) * 1.35 + 128));
       p[i] = p[i+1] = p[i+2] = g;
     }
     ctx.putImageData(d, 0, 0);
